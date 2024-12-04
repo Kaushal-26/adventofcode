@@ -1,1 +1,1 @@
-# My Submissions for Advent Of Code
+# My Solutions for [Advent Of Code](https://adventofcode.com)
