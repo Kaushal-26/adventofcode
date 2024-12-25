@@ -24,7 +24,6 @@ void setOin(bool isInput = true) {
 }
 
 void solve() {
-        std::string outputs;
         std::vector<long long> program;
         std::vector<long long> registers(3);
 
@@ -42,6 +41,7 @@ void solve() {
 
         bool kill_point_found = false;
         int instruction_pointer = 0;
+        std::vector<long long> outputs;
 
         auto opcode = [&](long long instructions, long long operand) {
                 switch (instructions) {
@@ -67,7 +67,7 @@ void solve() {
                                 registers[1] ^= registers[2];
                                 break;
                         case 5:
-                                outputs += std::to_string(combo(operand) % 8);
+                                outputs.push_back(combo(operand) % 8);
                                 break;
                         case 6:
                                 operand = combo(operand);
@@ -85,6 +85,15 @@ void solve() {
                 instruction_pointer += 2;
         };
         
+        auto simulate = [&]() {
+                instruction_pointer = 0;
+                kill_point_found = false;
+                outputs.clear();
+                while (instruction_pointer + 1 < (int) program.size() && !kill_point_found) {
+                        opcode(program[instruction_pointer], program[instruction_pointer + 1]);
+                }
+        };
+
         std::string temp;
         for (auto &R : registers) {
                 setOin();
@@ -103,9 +112,34 @@ void solve() {
         setOin(false);
         for (long long P = 0; oin >> P; ) program.push_back(P);
 
-        while (instruction_pointer + 1 < (int) program.size() && !kill_point_found) opcode(program[instruction_pointer], program[instruction_pointer + 1]);
 
-        for (int i = 0; i < (int) outputs.size(); ++i) std::cout << outputs[i] << ",\n"[i == (int) outputs.size() - 1];
+        // From Errichto's stream
+        // First 10 bits are important
+
+        std::vector<long long> posibilities;
+        for (int i = 0; i < 1024; ++i) posibilities.push_back(i);
+        
+        long long pw = 1024;
+        for (int i = 0; i < (int) program.size(); ++i) {
+                std::vector<long long> new_posibilities;
+                for (auto &P : posibilities) {
+                        registers[0] = P, registers[1] = 0, registers[2] = 0;
+                        simulate();
+
+                        if (i >= (int) outputs.size() || outputs[i] != program[i]) continue;
+                        for (int j = 0; j < 8; ++j) new_posibilities.push_back(j * pw + P);
+                }
+                posibilities = new_posibilities;
+                pw *= 8;
+        }
+
+        for (auto &P : posibilities) {
+                registers[0] = P, registers[1] = 0, registers[2] = 0;
+                simulate();
+                if (outputs.size() != program.size()) continue;
+                std::cout << P << "\n";
+                return;
+        }
 }
 
 int main() {
@@ -113,7 +147,7 @@ int main() {
 
         TimeCalculate timer;
         solve();
-        timer.end(); // Execution Time: 0.002063300000000
+        timer.end(); // Execution Time: 0.344198605000000
         return 0;
 }
 
