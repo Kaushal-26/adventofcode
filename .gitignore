@@ -38,3 +38,4 @@ Languages/
 lib/
 libs/combined.cpp
 
+**/Makefile
